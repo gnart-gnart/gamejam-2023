@@ -1,56 +1,59 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
-using TMPro;
 using UnityEngine;
+using UnityEngine.UIElements;
+using static UnityEngine.EventSystems.EventTrigger;
 
 public class EntityScript : MonoBehaviour
 {
-    protected Transform t;
-    protected Rigidbody2D rb;
-    public PlayerCameraScript pc; //player camera
-
-    //player movement stats
+    // Movement Data for when possessed
     public float dynamicFriction = 0.96f;
     public float staticFriction = 0.90f;
     public float mSpeed = 0.35f;
 
-    //player movement variables
-    protected float x_dir, y_dir, speed;
-    protected Vector2 dir;
-    protected bool moving;
+    public PlayerCameraScript pcs;
 
-    //the all-important boolean
-    public bool possessed;
-    protected bool possessable;
+    float x_dir, y_dir, speed;
+    Vector2 dir;
+    bool moving;
+    public bool infected;
+    bool infectable;
+    Rigidbody2D rb;
 
-    protected void Start()
+    void Start()
     {
-        possessable = true;
-        moving = false;
-        t = GetComponent<Transform>();
         rb = GetComponent<Rigidbody2D>();
-
-        pc = FindAnyObjectByType<PlayerCameraScript>();
+        pcs = GameObject.Find("Player Camera").GetComponent<PlayerCameraScript>();
+        infectable = true;
     }
 
-    private void Update()
+    void Update()
     {
-        if (possessed)
-        {
-            controlUpdate();
-        }
+        if (infected) { PUpdate(); }
     }
 
     private void FixedUpdate()
     {
-        if (possessed)
+        if (infected) { PFixedUpdate(); }
+    }
+
+    private void OnCollisionEnter2D(Collision2D c)
+    {
+        if (infected)
         {
-            controlFixedUpdate();
+            GameObject go = c.gameObject;
+            if (go.tag == "Entity" && go.GetComponent<EntityScript>().infectable)
+            {
+                Debug.Log("Collided!");
+                go.GetComponent<EntityScript>().infected = true;
+                pcs.target = go;
+                infectable = false;
+                infected = false;
+            }
         }
     }
 
-    protected void controlUpdate()
+    void PUpdate()
     {
         x_dir = 0;
         y_dir = 0;
@@ -73,7 +76,7 @@ public class EntityScript : MonoBehaviour
         }
     }
 
-    protected void controlFixedUpdate()
+    void PFixedUpdate()
     {
         if (x_dir == 0 && y_dir == 0)
         { moving = false; }
@@ -92,19 +95,5 @@ public class EntityScript : MonoBehaviour
         dir = new Vector2(x_dir, y_dir);
         dir.Normalize();
         rb.velocity = speed * dir;
-    }
-
-    protected void OnCollisionEnter2D(Collision2D coll)
-    {
-        if (possessed && coll.gameObject.GetComponent<EntityScript>().possessable)
-        {
-            possessed = false;
-            coll.gameObject.GetComponent<EntityScript>().possessed = true;
-            possessable = false;
-
-            pc.e = coll.gameObject.GetComponent<EntityScript>();
-
-            Debug.Log("Possessed!");
-        }
     }
 }
