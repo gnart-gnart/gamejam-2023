@@ -29,14 +29,7 @@ public class BulletPrefabScript : MonoBehaviour
         timeSinceSpawn = 0;
         destroyNextFrame = false;
 
-        if (parent.velocity.x == 0 && parent.velocity.y == 0)
-        {
-            rb.velocity = new Vector2(XDir, YDir).normalized * Spd;
-        }
-        else
-        {
-            rb.velocity = parent.velocity.normalized * Spd;
-        }
+        rb.velocity = new Vector2(XDir, YDir).normalized * Spd;
     }
 
     void Update()
@@ -47,14 +40,19 @@ public class BulletPrefabScript : MonoBehaviour
         {
             Destroy(this.gameObject);
         }
+
+        rb.velocity = new Vector2(XDir, YDir).normalized * Spd;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.tag == "Entity" && other.GetComponent<Rigidbody2D>() != this.parent)
         {
-            EntityScript e = other.GetComponent<EntityScript>();
-            e.Hurt(Dmg);
+            other.GetComponent<EntityScript>().Hurt(Dmg);
+            destroyNextFrame = true;
+        }
+        if (other.tag == "Wall")
+        {
             destroyNextFrame = true;
         }
     }

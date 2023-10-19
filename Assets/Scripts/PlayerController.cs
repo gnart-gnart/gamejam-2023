@@ -1,12 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class PlayerController : MonoBehaviour
 {
     public GameObject Body;
 
-    Vector2 direction;
+    Vector2 direction, mouseDir;
     Rigidbody2D rb;
     EntityScript es;
     EntityAIScript ai;
@@ -28,14 +29,14 @@ public class PlayerController : MonoBehaviour
 
         direction = new Vector2(move_x, move_y).normalized;
 
-        if (Input.GetKey(KeyCode.Space))
+        Vector2 worldMousePosition = Camera.main.ScreenToWorldPoint(new Vector2(Input.mousePosition.x, Input.mousePosition.y));
+        mouseDir = (worldMousePosition - rb.position).normalized;
+
+        es.PlaceFirepoint(mouseDir.x, mouseDir.y);
+
+        if (Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.Mouse0))
         {
             es.Attack();
-        }
-
-        if (move_x != 0 || move_y != 0)
-        {
-            es.PlaceFirepoint(move_x, move_y);
         }
     }
 

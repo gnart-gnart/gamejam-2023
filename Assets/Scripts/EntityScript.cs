@@ -70,6 +70,5 @@ public class EntityScript : MonoBehaviour
         bullXDir = xdir;
         bullYDir = ydir;
         firePoint.localPosition = new Vector3(xdir * 0.5f, ydir * 0.5f, firePoint.localPosition.z);
-
     }
 }

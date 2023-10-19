@@ -4,8 +4,11 @@ using UnityEngine;
 
 public class EntityAIScript : MonoBehaviour
 {
-    public float AIMinFollowDistance, AIMaxFollowDistance;
-    public bool possessed, possessable;
+    [SerializeField] private float minFollowDistance, maxFollowDistance, maxAttackDistance;
+    [SerializeField] public bool possessed, possessable;
+    [SerializeField] private Transform firePoint;
+
+    bool playerInSight, playerInRange;
 
     EntityScript es;
     GameObject player;
@@ -16,6 +19,7 @@ public class EntityAIScript : MonoBehaviour
     {
         es = GetComponent<EntityScript>();
         player = (GameObject.FindWithTag("Player")).GetComponent<PlayerController>().Body;
+        playerInSight = playerInRange = false;
     }
 
     void Update()
@@ -24,16 +28,49 @@ public class EntityAIScript : MonoBehaviour
         {
             distance = Vector2.Distance(transform.position, player.transform.position);
 
-            if (distance > AIMinFollowDistance && distance < AIMaxFollowDistance)
+            if (CanSeePlayer(distance))
             {
-                transform.position = Vector2.MoveTowards(transform.position, player.transform.position, es.Spd * Time.deltaTime);
+                if (distance > minFollowDistance && distance < maxFollowDistance)
+                {
+                    transform.position = Vector2.MoveTowards(transform.position, player.transform.position, es.Spd * Time.deltaTime);
+                }
+                if (distance < maxAttackDistance)
+                {
+                    Vector2 dir = player.transform.position - transform.position;
+                    dir.Normalize();
+                    es.PlaceFirepoint(dir.x, dir.y);
+                    es.Attack();
+                }
             }
         }
     }
-
-    private void FixedUpdate()
+    
+    // FIXME !!!!!!!!!!!!!!!!!
+    bool CanSeePlayer(float distance)
     {
+        float castDistance = distance;
 
+        Vector2 endPos = firePoint.position + Vector3.right * distance;
+
+        RaycastHit2D hit = Physics2D.Linecast(firePoint.position, endPos);
+        if (hit.collider != null)
+        {
+            GameObject go = hit.collider.gameObject;
+            if (go.GetComponent<EntityAIScript>() != null)
+            {
+                if (go.GetComponent<EntityAIScript>().possessed)
+                {
+                    Debug.Log("Can see player!");
+                    return true;
+                }
+            }
+            else if (hit.collider.CompareTag("Wall"))
+            {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     public bool TryPossess()
